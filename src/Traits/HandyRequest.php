@@ -54,17 +54,76 @@ trait HandyRequest
     }
 
     /**
-     * Get filtered value
+     * Get filtered value (for scalar or array value)
      *
      * @param mixed $value
      * @param mixed $key
+     * @param mixed|null $fullKey
      *
      * @return mixed
      */
-    protected function filteredValue($value, $key)
+    protected function filteredValue($value, $key, $fullKey = null)
     {
-        // @todo
+        if (empty($fullKey)) {
+            $fullKey = $key;
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $key => $item) {
+                $value[$key] = $this->filteredValue($item, $key,
+                    empty($fullKey) ? $key : $fullKey . '.' . $key);
+            }
+        } else {
+            $value = $this->filteredField($value, $key, $fullKey);
+        }
+
         return $value;
+    }
+
+    /**
+     * Apply filter to scalar value. If field has custom filter, use custom filter, otherwise apply
+     * general filters
+     *
+     * @param mixed $value
+     * @param mixed $key
+     * @param mixed $fullKey
+     *
+     * @return mixed
+     */
+    protected function filteredField($value, $key, $fullKey)
+    {
+        if ($this->hasFieldFilter($key, $fullKey)) {
+            $value = $this->{$this->fieldFilterName($key)}($value, $key);
+        } else {
+            $value = $this->applyFilters($value, $key, $this->filters());
+        }
+
+        return $value;
+    }
+
+    /**
+     * Verify whether exists custom field filter method for given key
+     *
+     * @param mixed $key
+     * @param $fullKey
+     *
+     * @return bool
+     */
+    protected function hasFieldFilter($key, $fullKey)
+    {
+        return method_exists($this, $this->fieldFilterName($key));
+    }
+
+    /**
+     * Get filter method name for single field
+     *
+     * @param string $fieldName
+     *
+     * @return string
+     */
+    protected function fieldFilterName($fieldName)
+    {
+        return 'apply' . ucfirst(mb_strtolower($fieldName)) . 'fieldFilter';
     }
 
     /**
@@ -79,6 +138,12 @@ trait HandyRequest
     {
         // @todo
         return $input;
+    }
+
+    protected function applyFilters($value, $key, array $filters)
+    {
+        // @todo
+        return $value;
     }
 
     /**
