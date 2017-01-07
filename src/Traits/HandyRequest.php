@@ -193,9 +193,7 @@ trait HandyRequest
         ) {
             return false;
         }
-        if (array_key_exists('except', $filterOptions) &&
-            in_array($key, $filterOptions['except'], true)
-        ) {
+        if (in_array($key, array_get($filterOptions, 'except', []), true)) {
             return false;
         }
 

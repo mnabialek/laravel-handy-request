@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Filters;
+
 use Mnabialek\LaravelHandyRequest\Filters\CheckboxFilter;
 use Tests\UnitTestCase;
 
