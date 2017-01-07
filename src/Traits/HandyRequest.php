@@ -2,6 +2,8 @@
 
 namespace Mnabialek\LaravelHandyRequest\Traits;
 
+use Mnabialek\LaravelHandyRequest\Filters\Contracts\Filter;
+
 trait HandyRequest
 {
     /**
@@ -44,7 +46,7 @@ trait HandyRequest
         }
 
         // apply any global filters
-        $input = $this->applyGlobalFilters($input, $this->filters());
+        $input = $this->applyGlobalFilters($input, $this->normalizedFilters());
 
         // now get value/values from input
         $value = data_get($input, $key, $default);
@@ -95,7 +97,7 @@ trait HandyRequest
         if ($this->hasFieldFilter($key, $fullKey)) {
             $value = $this->{$this->fieldFilterName($key)}($value, $key);
         } else {
-            $value = $this->applyFilters($value, $key, $this->filters());
+            $value = $this->applyFilters($value, $key, $this->normalizedFilters());
         }
 
         return $value;
@@ -136,14 +138,82 @@ trait HandyRequest
      */
     protected function applyGlobalFilters(array $input, array $filters)
     {
-        // @todo
+        foreach ($filters as $filter => $options) {
+            /** @var Filter $filterClass */
+            $filterClass = $this->getFilterClass($filter, $options);
+            if ($filterClass->isGlobal()) {
+                $input = $filterClass->applyGlobal($input);
+            }
+        }
+
         return $input;
     }
 
+    /**
+     * Apply filters to given value
+     *
+     * @param mixed $value
+     * @param mixed $key
+     * @param array $filters
+     *
+     * @return mixed
+     */
     protected function applyFilters($value, $key, array $filters)
     {
-        // @todo
+        foreach ($filters as $name => $options) {
+            if (! $this->shouldApplyFilter($key, $options)) {
+                continue;
+            }
+            /** @var Filter $class */
+            $class = $this->getFilterClass($name, array_except($options, ['only', 'except']));
+            $value = $class->apply($value, $key);
+        }
+
         return $value;
+    }
+
+    /**
+     * Verify whether filter should be applied to given key
+     *
+     * @param mixed $key
+     * @param array $filterOptions
+     *
+     * @return bool
+     */
+    protected function shouldApplyFilter($key, $filterOptions)
+    {
+        if (array_key_exists('only', $filterOptions) &&
+            ! in_array($key, $filterOptions['only'], true)
+        ) {
+            return false;
+        }
+        if (array_key_exists('except', $filterOptions) &&
+            in_array($key, $filterOptions['except'], true)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get filter class for given name
+     *
+     * @param string $filterName
+     * @param array $filterOptions
+     *
+     * @return Filter
+     */
+    protected function getFilterClass($filterName, array $filterOptions)
+    {
+        $className = '\\Mnabialek\\LaravelHandyRequest\\Filters\\' .
+            ucfirst(studly_case($filterName)) . 'Filter';
+
+        /** @var Filter $class */
+        $class = $this->container->make($className);
+        $class->setOptions($filterOptions);
+
+        return $class;
     }
 
     /**
@@ -154,5 +224,24 @@ trait HandyRequest
     protected function filters()
     {
         return property_exists($this, 'filters') ? $this->filters : [];
+    }
+
+    /**
+     * Get normalized filters in [[filterName => filterOptions],...] format
+     *
+     * @return array
+     */
+    protected function normalizedFilters()
+    {
+        $filters = $this->filters();
+
+        foreach ($filters as $filter => $options) {
+            if (! is_array($options)) {
+                $filters[$options] = [];
+                unset($filters[$filter]);
+            }
+        }
+
+        return $filters;
     }
 }
