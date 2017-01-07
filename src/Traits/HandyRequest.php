@@ -2,7 +2,9 @@
 
 namespace Mnabialek\LaravelHandyRequest\Traits;
 
+use Mnabialek\LaravelHandyRequest\Filters\Contracts\FieldFilter;
 use Mnabialek\LaravelHandyRequest\Filters\Contracts\Filter;
+use Mnabialek\LaravelHandyRequest\Filters\Contracts\GlobalFilter;
 
 trait HandyRequest
 {
@@ -142,6 +144,7 @@ trait HandyRequest
             /** @var Filter $filterClass */
             $filterClass = $this->getFilterClass($filter, $options);
             if ($filterClass->isGlobal()) {
+                /** @var GlobalFilter $filterClass */
                 $input = $filterClass->applyGlobal($input);
             }
         }
@@ -164,9 +167,12 @@ trait HandyRequest
             if (! $this->shouldApplyFilter($key, $options)) {
                 continue;
             }
-            /** @var Filter $class */
-            $class = $this->getFilterClass($name, array_except($options, ['only', 'except']));
-            $value = $class->apply($value, $key);
+            /** @var Filter $filterClass */
+            $filterClass = $this->getFilterClass($name, array_except($options, ['only', 'except']));
+            if (! $filterClass->isGlobal()) {
+                /** @var FieldFilter $filterClass */
+                $value = $filterClass->apply($value, $key);
+            }
         }
 
         return $value;
