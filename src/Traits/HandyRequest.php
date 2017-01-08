@@ -200,18 +200,32 @@ trait HandyRequest
         return true;
     }
 
-    protected function canBeMatchedToFieldsConstraints($fullKey, $constraints)
+    /**
+     * Verify whether field can be matched to field constraints
+     *
+     * @param string $fullKey
+     * @param array $constraints
+     *
+     * @return bool
+     */
+    protected function canBeMatchedToFieldsConstraints($fullKey, array $constraints)
     {
         foreach ($constraints as $constraint) {
             if (ends_with($constraint, '.**')) {
-                $regex = preg_replace('/(?<!\*)\*(?!\*)/', '(?>[^\.])+', $constraint);
-                $regex = '/^(' . str_replace('.**', '\..*', $regex) . ')$/';
+                // 1st replace all dots into PCRE dot character
+                $regex = str_replace('.', '\.', $constraint);
+                // then replace all single asterisk into any character expression (except dot)
+                $regex = preg_replace('/(?<!\*)\*(?!\*)/', '(?>[^\.])+', $regex);
+                // finally replace ending double asterisk into any character expression
+                $regex = '/^(' . str_replace_last('\.**', '\..*', $regex) . ')$/';
 
                 if (preg_match($regex, $fullKey)) {
                     return true;
                 }
             } else {
-                $regex = '/^(' . str_replace('*', '(?>[^\.])+', $constraint) . ')$/';
+                // replace all dots into PCRE dot character and all asterisk into any character
+                // expression (except dot)
+                $regex = '/^(' . str_replace(['.', '*'], ['\.', '(?>[^\.])+'], $constraint) . ')$/';
                 if (preg_match($regex, $fullKey)) {
                     return true;
                 }
