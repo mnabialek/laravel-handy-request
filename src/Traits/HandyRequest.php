@@ -99,7 +99,7 @@ trait HandyRequest
         if ($this->hasFieldFilter($key, $fullKey)) {
             $value = $this->{$this->fieldFilterName($key)}($value, $key);
         } else {
-            $value = $this->applyFilters($value, $key, $this->normalizedFilters());
+            $value = $this->applyFilters($value, $fullKey, $this->normalizedFilters());
         }
 
         return $value;
@@ -156,22 +156,22 @@ trait HandyRequest
      * Apply filters to given value
      *
      * @param mixed $value
-     * @param mixed $key
+     * @param mixed $fullKey
      * @param array $filters
      *
      * @return mixed
      */
-    protected function applyFilters($value, $key, array $filters)
+    protected function applyFilters($value, $fullKey, array $filters)
     {
         foreach ($filters as $name => $options) {
-            if (! $this->shouldApplyFilter($key, $options)) {
+            if (! $this->shouldApplyFilter($fullKey, $options)) {
                 continue;
             }
             /** @var Filter $filterClass */
             $filterClass = $this->getFilterClass($name, array_except($options, ['only', 'except']));
             if (! $filterClass->isGlobal()) {
                 /** @var FieldFilter $filterClass */
-                $value = $filterClass->apply($value, $key);
+                $value = $filterClass->apply($value, $fullKey);
             }
         }
 
@@ -181,19 +181,19 @@ trait HandyRequest
     /**
      * Verify whether filter should be applied to given key
      *
-     * @param mixed $key
+     * @param mixed $fullKey
      * @param array $filterOptions
      *
      * @return bool
      */
-    protected function shouldApplyFilter($key, $filterOptions)
+    protected function shouldApplyFilter($fullKey, $filterOptions)
     {
         if (array_key_exists('only', $filterOptions) &&
-            ! in_array($key, $filterOptions['only'], true)
+            ! in_array($fullKey, $filterOptions['only'], true)
         ) {
             return false;
         }
-        if (in_array($key, array_get($filterOptions, 'except', []), true)) {
+        if (in_array($fullKey, array_get($filterOptions, 'except', []), true)) {
             return false;
         }
 
