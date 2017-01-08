@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Container\Container;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Mnabialek\LaravelHandyRequest\HandyRequest;
@@ -32,6 +33,7 @@ class HandyRequestTest extends UnitTestCase
 
         $handyRequest = new HandyRequest();
         $handyRequest->initializeFromRequest($request);
+        $handyRequest->setContainer(new Application());
 
         $this->assertEquals($request->query(), $handyRequest->query());
         $this->assertEquals($request->input(), $handyRequest->input());

@@ -2,6 +2,7 @@
 
 namespace Mnabialek\LaravelHandyRequest\Traits;
 
+use Mnabialek\LaravelHandyRequest\ConstraintChecker;
 use Mnabialek\LaravelHandyRequest\Filters\Contracts\FieldFilter;
 use Mnabialek\LaravelHandyRequest\Filters\Contracts\Filter;
 use Mnabialek\LaravelHandyRequest\Filters\Contracts\GlobalFilter;
@@ -14,6 +15,13 @@ trait HandyRequest
      * @var array
      */
     protected static $registeredFilters = [];
+
+    /**
+     * Constraint checker
+     *
+     * @var ConstraintChecker
+     */
+    protected $constraintChecker = null;
 
     /**
      * {@inheritdoc}
@@ -137,7 +145,7 @@ trait HandyRequest
     {
         if (property_exists($this, 'fieldFiltersMethods')) {
             foreach ($this->fieldFiltersMethods as $constraint => $methodName) {
-                if ($this->fieldMatchesConstraint($fullKey, $constraint)) {
+                if ($this->constraintChecker->fieldMatchesConstraint($fullKey, $constraint)) {
                     return $methodName;
                 }
             }
@@ -205,69 +213,19 @@ trait HandyRequest
     protected function shouldApplyFilter($fullKey, $filterOptions)
     {
         if (array_key_exists('only', $filterOptions) &&
-            ! $this->canBeMatchedToFieldsConstraints($fullKey, $filterOptions['only'])
+            ! $this->constraintChecker->canBeMatchedToFieldsConstraints($fullKey,
+                $filterOptions['only'])
         ) {
             return false;
         }
         if (array_key_exists('except', $filterOptions) &&
-            $this->canBeMatchedToFieldsConstraints($fullKey, $filterOptions['except'])
+            $this->constraintChecker->canBeMatchedToFieldsConstraints($fullKey,
+                $filterOptions['except'])
         ) {
             return false;
         }
 
         return true;
-    }
-
-    /**
-     * Verify whether field can be matched to field constraints
-     *
-     * @param string $fullKey
-     * @param array $constraints
-     *
-     * @return bool
-     */
-    protected function canBeMatchedToFieldsConstraints($fullKey, array $constraints)
-    {
-        foreach ($constraints as $constraint) {
-            if ($this->fieldMatchesConstraint($fullKey, $constraint)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Verify whether field with given key matches given constraint
-     *
-     * @param string $fullKey
-     * @param string $constraint
-     *
-     * @return bool
-     */
-    protected function fieldMatchesConstraint($fullKey, $constraint)
-    {
-        if (ends_with($constraint, '.**')) {
-            // 1st replace all dots into PCRE dot character
-            $regex = str_replace('.', '\.', $constraint);
-            // then replace all single asterisk into any character expression (except dot)
-            $regex = preg_replace('/(?<!\*)\*(?!\*)/', '(?>[^\.])+', $regex);
-            // finally replace ending double asterisk into any character expression
-            $regex = '/^(' . str_replace_last('\.**', '\..*', $regex) . ')$/';
-
-            if (preg_match($regex, $fullKey)) {
-                return true;
-            }
-        } else {
-            // replace all dots into PCRE dot character and all asterisk into any character
-            // expression (except dot)
-            $regex = '/^(' . str_replace(['.', '*'], ['\.', '(?>[^\.])+'], $constraint) . ')$/';
-            if (preg_match($regex, $fullKey)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -350,5 +308,8 @@ trait HandyRequest
         if (method_exists($this, 'registerFilters')) {
             $this->registerFilters();
         }
+
+        // create constraint checker
+        $this->constraintChecker = $this->container->make(ConstraintChecker::class);
     }
 }
