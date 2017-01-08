@@ -189,7 +189,7 @@ trait HandyRequest
     protected function shouldApplyFilter($fullKey, $filterOptions)
     {
         if (array_key_exists('only', $filterOptions) &&
-            !$this->canBeMatchedToFieldsConstraints($fullKey, $filterOptions['only'])
+            ! $this->canBeMatchedToFieldsConstraints($fullKey, $filterOptions['only'])
         ) {
             return false;
         }
@@ -203,9 +203,18 @@ trait HandyRequest
     protected function canBeMatchedToFieldsConstraints($fullKey, $constraints)
     {
         foreach ($constraints as $constraint) {
-            $regex = '/^('.str_replace('*', '(?>[^\.])+', $constraint).')$/';
-            if (preg_match($regex, $fullKey)) {
-                return true;
+            if (ends_with($constraint, '.**')) {
+                $regex = preg_replace('/(?<!\*)\*(?!\*)/', '(?>[^\.])+', $constraint);
+                $regex = '/^(' . str_replace('.**', '\..*', $regex) . ')$/';
+
+                if (preg_match($regex, $fullKey)) {
+                    return true;
+                }
+            } else {
+                $regex = '/^(' . str_replace('*', '(?>[^\.])+', $constraint) . ')$/';
+                if (preg_match($regex, $fullKey)) {
+                    return true;
+                }
             }
         }
 
