@@ -808,6 +808,34 @@ class HandyRequestTest extends UnitTestCase
         $this->assertEquals(['a' => '', 'b' => null, 'c' => 2], $request->all());
     }
 
+    /** @test */
+    public function it_allow_to_add_any_data_to_input_and_runs_filters_on_it()
+    {
+        $input = [
+            'a' => ' ',
+            'b' => '',
+            'c' => 2,
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'nullable',
+                'trim',
+            ];
+
+            protected function modifyInput(array $input)
+            {
+                $input['d'] = $input['c'] . 'x2 ';
+                $input['e'] = '';
+                unset($input['c']);
+
+                return $input;
+            }
+        });
+
+        $this->assertEquals(['a' => '', 'b' => null, 'd' => '2x2', 'e' => null], $request->all());
+    }
+
     protected function initializeRequest(array $input, $class)
     {
         $request = new Request($input);
