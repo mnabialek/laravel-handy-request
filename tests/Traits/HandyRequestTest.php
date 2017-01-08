@@ -770,6 +770,44 @@ class HandyRequestTest extends UnitTestCase
         ], $request->all());
     }
 
+    /** @test */
+    public function it_runs_filters_in_valid_order()
+    {
+        $input = [
+            'a' => ' ',
+            'b' => '',
+            'c' => 2,
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'trim',
+                'nullable',
+            ];
+        });
+
+        $this->assertEquals(['a' => null, 'b' => null, 'c' => 2], $request->all());
+    }
+
+    /** @test */
+    public function it_runs_filters_in_valid_order_2()
+    {
+        $input = [
+            'a' => ' ',
+            'b' => '',
+            'c' => 2,
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'nullable',
+                'trim',
+            ];
+        });
+
+        $this->assertEquals(['a' => '', 'b' => null, 'c' => 2], $request->all());
+    }
+
     protected function initializeRequest(array $input, $class)
     {
         $request = new Request($input);
