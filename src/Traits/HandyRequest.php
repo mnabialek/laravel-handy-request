@@ -96,8 +96,8 @@ trait HandyRequest
      */
     protected function filteredField($value, $key, $fullKey)
     {
-        if ($this->hasFieldFilter($key, $fullKey)) {
-            $value = $this->{$this->fieldFilterName($key)}($value, $key);
+        if ($this->hasFieldFilter($fullKey)) {
+            $value = $this->{$this->fieldFilterName($fullKey)}($value, $fullKey);
         } else {
             $value = $this->applyFilters($value, $fullKey, $this->normalizedFilters());
         }
@@ -108,26 +108,33 @@ trait HandyRequest
     /**
      * Verify whether exists custom field filter method for given key
      *
-     * @param mixed $key
-     * @param $fullKey
+     * @param string $fullKey
      *
      * @return bool
      */
-    protected function hasFieldFilter($key, $fullKey)
+    protected function hasFieldFilter($fullKey)
     {
-        return method_exists($this, $this->fieldFilterName($key));
+        return method_exists($this, $this->fieldFilterName($fullKey));
     }
 
     /**
      * Get filter method name for single field
      *
-     * @param string $fieldName
+     * @param string $fullKey
      *
      * @return string
      */
-    protected function fieldFilterName($fieldName)
+    protected function fieldFilterName($fullKey)
     {
-        return 'apply' . ucfirst(mb_strtolower($fieldName)) . 'fieldFilter';
+        if (property_exists($this, 'fieldFiltersMethods')) {
+            foreach ($this->fieldFiltersMethods as $constraint => $methodName) {
+                if ($this->fieldMatchesConstraint($fullKey, $constraint)) {
+                    return $methodName;
+                }
+            }
+        }
+
+        return 'apply' . ucfirst(mb_strtolower($fullKey)) . 'fieldFilter';
     }
 
     /**
@@ -213,24 +220,41 @@ trait HandyRequest
     protected function canBeMatchedToFieldsConstraints($fullKey, array $constraints)
     {
         foreach ($constraints as $constraint) {
-            if (ends_with($constraint, '.**')) {
-                // 1st replace all dots into PCRE dot character
-                $regex = str_replace('.', '\.', $constraint);
-                // then replace all single asterisk into any character expression (except dot)
-                $regex = preg_replace('/(?<!\*)\*(?!\*)/', '(?>[^\.])+', $regex);
-                // finally replace ending double asterisk into any character expression
-                $regex = '/^(' . str_replace_last('\.**', '\..*', $regex) . ')$/';
+            if ($this->fieldMatchesConstraint($fullKey, $constraint)) {
+                return true;
+            }
+        }
 
-                if (preg_match($regex, $fullKey)) {
-                    return true;
-                }
-            } else {
-                // replace all dots into PCRE dot character and all asterisk into any character
-                // expression (except dot)
-                $regex = '/^(' . str_replace(['.', '*'], ['\.', '(?>[^\.])+'], $constraint) . ')$/';
-                if (preg_match($regex, $fullKey)) {
-                    return true;
-                }
+        return false;
+    }
+
+    /**
+     * Verify whether field with given key matches given constraint
+     *
+     * @param string $fullKey
+     * @param string $constraint
+     *
+     * @return bool
+     */
+    protected function fieldMatchesConstraint($fullKey, $constraint)
+    {
+        if (ends_with($constraint, '.**')) {
+            // 1st replace all dots into PCRE dot character
+            $regex = str_replace('.', '\.', $constraint);
+            // then replace all single asterisk into any character expression (except dot)
+            $regex = preg_replace('/(?<!\*)\*(?!\*)/', '(?>[^\.])+', $regex);
+            // finally replace ending double asterisk into any character expression
+            $regex = '/^(' . str_replace_last('\.**', '\..*', $regex) . ')$/';
+
+            if (preg_match($regex, $fullKey)) {
+                return true;
+            }
+        } else {
+            // replace all dots into PCRE dot character and all asterisk into any character
+            // expression (except dot)
+            $regex = '/^(' . str_replace(['.', '*'], ['\.', '(?>[^\.])+'], $constraint) . ')$/';
+            if (preg_match($regex, $fullKey)) {
+                return true;
             }
         }
 
