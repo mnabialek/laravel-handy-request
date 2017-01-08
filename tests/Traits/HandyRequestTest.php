@@ -5,6 +5,8 @@ namespace Tests\Traits;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Mnabialek\LaravelHandyRequest\HandyRequest;
+use Tests\Helpers\CapitalizeFilter;
+use Tests\Helpers\NewTrimFilter;
 use Tests\UnitTestCase;
 
 class HandyRequestTest extends UnitTestCase
@@ -809,7 +811,7 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_allow_to_add_any_data_to_input_and_runs_filters_on_it()
+    public function it_allows_to_add_any_data_to_input_and_runs_filters_on_it()
     {
         $input = [
             'a' => ' ',
@@ -837,7 +839,7 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_allow_to_use_custom_field_filter()
+    public function it_allows_to_use_custom_field_filter()
     {
         $input = [
             'a' => ' ',
@@ -888,7 +890,7 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_allow_to_use_custom_field_filter_and_run_other_filters()
+    public function it_allows_to_use_custom_field_filter_and_run_other_filters()
     {
         $input = [
             'c' => 2,
@@ -923,7 +925,7 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_allow_to_use_custom_fields_filter_and_run_other_filters_when_complex_input()
+    public function it_allows_to_use_custom_fields_filter_and_run_other_filters_when_complex_input()
     {
         $input = [
             'c' => 2,
@@ -1022,7 +1024,7 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_allow_to_use_custom_fields_filter_with_double_asterisk_and_run_other_filters_when_complex_input()
+    public function it_allows_to_use_custom_fields_filter_with_double_asterisk_and_run_other_filters_when_complex_input()
     {
         $input = [
             'c' => 2,
@@ -1120,6 +1122,32 @@ class HandyRequestTest extends UnitTestCase
         ], $request->all());
     }
 
+    /** @test */
+    public function it_allows_to_use_custom_filters_and_override_existing_ones()
+    {
+        $input = [
+            'c' => 'abc',
+            'd' => '  def ',
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'trim',
+                'new_custom_capitalize',
+            ];
+
+            protected function registerFilters()
+            {
+                self::registerFilter('trim', NewTrimFilter::class);
+                self::registerFilter('new_custom_capitalize', CapitalizeFilter::class);
+            }
+        });
+
+        $this->assertEquals([
+            'c' => 'AB TRIMMED',
+            'd' => '  DEF TRIMMED',
+        ], $request->all());
+    }
 
     protected function initializeRequest(array $input, $class)
     {
