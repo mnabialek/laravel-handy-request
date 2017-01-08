@@ -193,7 +193,9 @@ trait HandyRequest
         ) {
             return false;
         }
-        if (in_array($fullKey, array_get($filterOptions, 'except', []), true)) {
+        if (array_key_exists('except', $filterOptions) &&
+            $this->canBeMatchedToFieldsConstraints($fullKey, $filterOptions['except'])
+        ) {
             return false;
         }
 
