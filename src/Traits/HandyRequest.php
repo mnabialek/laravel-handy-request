@@ -90,7 +90,7 @@ trait HandyRequest
                     empty($fullKey) ? $key : $fullKey . '.' . $key);
             }
         } else {
-            $value = $this->filteredField($value, $key, $fullKey);
+            $value = $this->filteredField($value, $fullKey);
         }
 
         return $value;
@@ -101,12 +101,11 @@ trait HandyRequest
      * general filters
      *
      * @param mixed $value
-     * @param mixed $key
      * @param mixed $fullKey
      *
      * @return mixed
      */
-    protected function filteredField($value, $key, $fullKey)
+    protected function filteredField($value, $fullKey)
     {
         if ($this->hasFieldFilter($fullKey)) {
             $value = $this->{$this->fieldFilterName($fullKey)}($value, $fullKey);
