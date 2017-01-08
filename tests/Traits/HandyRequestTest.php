@@ -887,6 +887,41 @@ class HandyRequestTest extends UnitTestCase
         ], $request->all());
     }
 
+    /** @test */
+    public function it_allow_to_use_custom_field_filter_and_run_other_filters()
+    {
+        $input = [
+            'c' => 2,
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'nullable',
+                'trim',
+            ];
+
+            protected function modifyInput(array $input)
+            {
+                $input['d'] = $input['c'] . 'x2 ';
+                unset($input['c']);
+
+                return $input;
+            }
+
+            // should be run (and other filters should be also applied)
+            protected function applyDFieldFilter($value, $key)
+            {
+                $value = $this->applyFilters($value, $key, $this->normalizedFilters());
+
+                return $value . 'sample text for D ';
+            }
+        });
+
+        $this->assertEquals([
+            'd' => '2x2sample text for D ',
+        ], $request->all());
+    }
+
     protected function initializeRequest(array $input, $class)
     {
         $request = new Request($input);
