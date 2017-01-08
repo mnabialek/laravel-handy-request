@@ -58,6 +58,54 @@ class HandyRequestTest extends UnitTestCase
         $this->assertEquals(['b' => ' bbb ', 'c' => 2], $request->except('a'));
     }
 
+    /** @test */
+    public function it_applies_valid_trim_filter_for_all_fields_for_flat_structure()
+    {
+        $input = ['a' => ' aaa ', 'b' => ' bbb ', 'c' => 2];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'trim',
+            ];
+        });
+
+        $this->assertEquals(['a' => 'aaa', 'b' => 'bbb', 'c' => 2], $request->all());
+    }
+
+    /** @test */
+    public function it_applies_valid_trim_filter_when_only_option_used_for_flat_structure()
+    {
+        $input = ['a' => ' aaa ', 'b' => ' bbb ', 'c' => 2, 'd' => ' ddd '];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'trim' => [
+                    'only' => ['a', 'd'],
+                ],
+            ];
+        });
+
+        $this->assertEquals(['a' => 'aaa', 'b' => ' bbb ', 'c' => 2, 'd' => 'ddd'],
+            $request->all());
+    }
+
+    /** @test */
+    public function it_applies_valid_trim_filter_when_except_option_used_for_flat_structure()
+    {
+        $input = ['a' => ' aaa ', 'b' => ' bbb ', 'c' => 2, 'd' => ' ddd '];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'trim' => [
+                    'except' => ['b', 'c'],
+                ],
+            ];
+        });
+
+        $this->assertEquals(['a' => 'aaa', 'b' => ' bbb ', 'c' => 2, 'd' => 'ddd'],
+            $request->all());
+    }
+
     protected function initializeRequest(array $input, $class)
     {
         $request = new Request($input);
