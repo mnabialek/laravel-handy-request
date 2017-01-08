@@ -9,6 +9,13 @@ use Mnabialek\LaravelHandyRequest\Filters\Contracts\GlobalFilter;
 trait HandyRequest
 {
     /**
+     * Custom registered filters
+     *
+     * @var array
+     */
+    protected static $registeredFilters = [];
+
+    /**
      * {@inheritdoc}
      */
     public function input($key = null, $default = null)
@@ -41,6 +48,11 @@ trait HandyRequest
     {
         // get original input
         $input = $this->getInputSource()->all() + $this->query->all();
+
+        // register any custom filters
+        if (method_exists($this, 'registerFilters')) {
+            $this->registerFilters();
+        }
 
         // modify all the input in case custom method exists
         if (method_exists($this, 'modifyInput')) {
@@ -271,14 +283,25 @@ trait HandyRequest
      */
     protected function getFilterClass($filterName, array $filterOptions)
     {
-        $className = '\\Mnabialek\\LaravelHandyRequest\\Filters\\' .
-            ucfirst(studly_case($filterName)) . 'Filter';
-
         /** @var Filter $class */
-        $class = $this->container->make($className);
+        $class = $this->container->make($this->getFilterClassName($filterName));
         $class->setOptions($filterOptions);
 
         return $class;
+    }
+
+    /**
+     * Get class name for given filter name
+     *
+     * @param string $filterName
+     *
+     * @return string
+     */
+    protected function getFilterClassName($filterName)
+    {
+        return array_get(self::$registeredFilters, $filterName,
+            '\\Mnabialek\\LaravelHandyRequest\\Filters\\' . ucfirst(studly_case($filterName)) .
+            'Filter');
     }
 
     /**
@@ -308,5 +331,16 @@ trait HandyRequest
         }
 
         return $filters;
+    }
+
+    /**
+     * Register custom filter with given name
+     *
+     * @param string $filterName Filter name
+     * @param string $filterClass Filter class
+     */
+    public static function registerFilter($filterName, $filterClass)
+    {
+        self::$registeredFilters[$filterName] = $filterClass;
     }
 }
