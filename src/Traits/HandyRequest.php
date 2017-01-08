@@ -49,10 +49,8 @@ trait HandyRequest
         // get original input
         $input = $this->getInputSource()->all() + $this->query->all();
 
-        // register any custom filters
-        if (method_exists($this, 'registerFilters')) {
-            $this->registerFilters();
-        }
+        // initialize filtering requirements
+        $this->initializeFilteringRequirements();
 
         // modify all the input in case custom method exists
         if (method_exists($this, 'modifyInput')) {
@@ -341,5 +339,16 @@ trait HandyRequest
     public static function registerFilter($filterName, $filterClass)
     {
         self::$registeredFilters[$filterName] = $filterClass;
+    }
+
+    /**
+     * Set any filtering requirements and run any methods needed to be run before filtering
+     */
+    protected function initializeFilteringRequirements()
+    {
+        // register any custom filters
+        if (method_exists($this, 'registerFilters')) {
+            $this->registerFilters();
+        }
     }
 }
