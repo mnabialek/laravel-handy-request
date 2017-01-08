@@ -315,7 +315,7 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_resolves_contraints_in_valid_way()
+    public function it_resolves_constraints_in_valid_way_for_only_option()
     {
         $input = [
             'da' => ' ddd ',
@@ -335,6 +335,12 @@ class HandyRequestTest extends UnitTestCase
                     'x' => [
                         'a' => ' aaa ',
                         'b' => ' bbb ',
+                        'c' => [
+                            'd' => ' ddd ',
+                            'e' => [
+                                'f' => ' fff ',
+                            ],
+                        ],
                     ],
                     'ax' => [
                         'a' => ' aaa ',
@@ -370,6 +376,12 @@ class HandyRequestTest extends UnitTestCase
                     'x' => [
                         'a' => 'aaa',
                         'b' => 'bbb',
+                        'c' => [
+                            'd' => 'ddd',
+                            'e' => [
+                                'f' => 'fff',
+                            ],
+                        ],
                     ],
                     'ax' => [
                         'a' => ' aaa ',
@@ -445,7 +457,6 @@ class HandyRequestTest extends UnitTestCase
             ],
         ], $request->all());
     }
-
 
     /** @test */
     public function it_applies_valid_trim_filter_when_except_option_used_for_complex_structure()
@@ -616,7 +627,7 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_resolves_contraints_in_valid_way_for_except_option()
+    public function it_resolves_constraints_in_valid_way_for_except_option()
     {
         $input = [
             'da' => ' ddd ',
@@ -636,6 +647,12 @@ class HandyRequestTest extends UnitTestCase
                     'x' => [
                         'a' => ' aaa ',
                         'b' => ' bbb ',
+                        'c' => [
+                            'd' => ' ddd ',
+                            'e' => [
+                                'f' => ' fff ',
+                            ],
+                        ],
                     ],
                     'ax' => [
                         'a' => ' aaa ',
@@ -671,6 +688,12 @@ class HandyRequestTest extends UnitTestCase
                     'x' => [
                         'a' => ' aaa ',
                         'b' => ' bbb ',
+                        'c' => [
+                            'd' => ' ddd ',
+                            'e' => [
+                                'f' => ' fff ',
+                            ],
+                        ],
                     ],
                     'ax' => [
                         'a' => 'aaa',
