@@ -189,7 +189,7 @@ trait HandyRequest
     protected function shouldApplyFilter($fullKey, $filterOptions)
     {
         if (array_key_exists('only', $filterOptions) &&
-            ! in_array($fullKey, $filterOptions['only'], true)
+            !$this->canBeMatchedToFieldsConstraints($fullKey, $filterOptions['only'])
         ) {
             return false;
         }
@@ -198,6 +198,18 @@ trait HandyRequest
         }
 
         return true;
+    }
+
+    protected function canBeMatchedToFieldsConstraints($fullKey, $constraints)
+    {
+        foreach ($constraints as $constraint) {
+            $regex = '/^('.str_replace('*', '(?>[^\.])+', $constraint).')$/';
+            if (preg_match($regex, $fullKey)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
