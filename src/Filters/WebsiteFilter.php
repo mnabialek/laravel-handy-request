@@ -21,7 +21,7 @@ class WebsiteFilter extends FieldFilter
 
         $secure = (bool)array_get($this->options, 'secure', $this->defaultSecure());
 
-        return (($secure) ? 'https://' : 'http://') . $value;
+        return (($secure) ? 'https://' : 'http://') . ltrim($value);
     }
 
     /**
