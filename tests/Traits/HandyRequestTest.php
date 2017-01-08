@@ -836,6 +836,57 @@ class HandyRequestTest extends UnitTestCase
         $this->assertEquals(['a' => '', 'b' => null, 'd' => '2x2', 'e' => null], $request->all());
     }
 
+    /** @test */
+    public function it_allow_to_use_custom_field_filter()
+    {
+        $input = [
+            'a' => ' ',
+            'b' => '',
+            'c' => 2,
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'nullable',
+                'trim',
+            ];
+
+            protected function modifyInput(array $input)
+            {
+                $input['d'] = $input['c'] . 'x2 ';
+                $input['e'] = '';
+                unset($input['c']);
+
+                return $input;
+            }
+
+            // should be run (and no other filters should be applied)
+            protected function applyDFieldFilter($value, $key)
+            {
+                return $value . 'sample text for D ';
+            }
+
+            // should not be run (c is unset in modifyInput method)
+            protected function applyCFieldFilter($value, $key)
+            {
+                return $value . 'sample text for C ';
+            }
+
+            // should be run
+            protected function applyAFieldFilter($value, $key)
+            {
+                return 'custom A value';
+            }
+        });
+
+        $this->assertEquals([
+            'a' => 'custom A value',
+            'b' => null,
+            'd' => '2x2 sample text for D ',
+            'e' => null,
+        ], $request->all());
+    }
+
     protected function initializeRequest(array $input, $class)
     {
         $request = new Request($input);
