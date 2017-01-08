@@ -922,6 +922,105 @@ class HandyRequestTest extends UnitTestCase
         ], $request->all());
     }
 
+    /** @test */
+    public function it_allow_to_use_custom_fields_filter_and_run_other_filters_when_complex_input()
+    {
+        $input = [
+            'c' => 2,
+            'e' => [
+                'f' => ' sample f text ',
+                'g' => [
+                    [
+                        'name' => ' 1st g name ',
+                        'surname' => ' 1st g surname ',
+                        'street' => [
+                            'name' => ' Sample street name 1st ',
+                        ],
+                    ],
+                    [
+                        'name' => ' 2nd g name ',
+                        'surname ' => ' 2nd g surname ',
+                        'street' => [
+                            'name' => ' Sample street name 2nd ',
+                        ],
+                    ],
+                    [
+                        'name' => ' 3rd g name ',
+                        'surname ' => ' 3rd g surname ',
+                        'street' => [
+                            'name' => ' Sample street name 3rd ',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'nullable',
+                'trim' => [
+                    'only' => ['e.g.*.name'],
+                ],
+            ];
+
+            protected $fieldFiltersMethods = [
+                'e.g.1.name' => 'applyPersonName2ndFieldFilter',
+                'e.g.*.name' => 'applyPersonNameFieldFilter',
+            ];
+
+            protected function modifyInput(array $input)
+            {
+                $input['d'] = $input['c'] . 'x2 ';
+                unset($input['c']);
+
+                return $input;
+            }
+
+            // should be run (and other filters should be also applied)
+            protected function applyPersonNameFieldFilter($value, $key)
+            {
+                $value = $this->applyFilters($value, $key, $this->normalizedFilters());
+
+                return $value . ' modified ' . $key;
+            }
+
+            protected function applyPersonName2ndFieldFilter($value, $key)
+            {
+                return $value . ' modified for 2nd person ' . $key;
+            }
+        });
+
+        $this->assertEquals([
+            'd' => '2x2 ',
+            'e' => [
+                'f' => ' sample f text ',
+                'g' => [
+                    [
+                        'name' => '1st g name modified e.g.0.name',
+                        'surname' => ' 1st g surname ',
+                        'street' => [
+                            'name' => ' Sample street name 1st ',
+                        ],
+                    ],
+                    [
+                        'name' => ' 2nd g name  modified for 2nd person e.g.1.name',
+                        'surname ' => ' 2nd g surname ',
+                        'street' => [
+                            'name' => ' Sample street name 2nd ',
+                        ],
+                    ],
+                    [
+                        'name' => '3rd g name modified e.g.2.name',
+                        'surname ' => ' 3rd g surname ',
+                        'street' => [
+                            'name' => ' Sample street name 3rd ',
+                        ],
+                    ],
+                ],
+            ],
+        ], $request->all());
+    }
+
     protected function initializeRequest(array $input, $class)
     {
         $request = new Request($input);
