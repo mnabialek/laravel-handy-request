@@ -366,15 +366,15 @@ class HandyRequestTest extends UnitTestCase
                     'a' => ' aaa ',
                     'b' => ' bbb ',
                     'name' => 'this is g name',
-                    'surname' => 'This is g surname',
+                    'surname' => ' This is g surname ',
                 ],
                 [
                     'name' => 'this is 1 st name',
-                    'surname' => 'This is 1st surname',
+                    'surname' => ' This is 1st surname ',
                 ],
                 [
                     'name' => 'this is 2nd name',
-                    'surname' => 'This is 2nd surname',
+                    'surname' => ' This is 2nd surname ',
                 ],
             ],
         ], $request->all());
