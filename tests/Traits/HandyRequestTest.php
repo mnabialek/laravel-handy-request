@@ -315,6 +315,72 @@ class HandyRequestTest extends UnitTestCase
     }
 
     /** @test */
+    public function it_resolves_contraints_in_valid_way()
+    {
+        $input = [
+            'da' => ' ddd ',
+            'dwa' => [
+                'x' => [
+                    'a' => ' aaa ',
+                    'b' => ' bbb ',
+                ],
+            ],
+            'd' => [
+                'a' => ' aaa ',
+                'e' => ' eee ',
+                'f' => ' fff ',
+                'g' => [
+                    'a' => ' aaa ',
+                    'b' => ' bbb ',
+                    'x' => [
+                        'a' => ' aaa ',
+                        'b' => ' bbb ',
+                    ],
+                    'ax' => [
+                        'a' => ' aaa ',
+                        'b' => ' bbb ',
+                    ],
+                ],
+            ],
+        ];
+
+        $request = $this->initializeRequest($input, new class() extends HandyRequest {
+            protected $filters = [
+                'trim' => [
+                    'only' => ['d.*.x.**'],
+                ],
+            ];
+        });
+
+        $this->assertEquals([
+            'da' => ' ddd ',
+            'dwa' => [
+                'x' => [
+                    'a' => ' aaa ',
+                    'b' => ' bbb ',
+                ],
+            ],
+            'd' => [
+                'a' => ' aaa ',
+                'e' => ' eee ',
+                'f' => ' fff ',
+                'g' => [
+                    'a' => ' aaa ',
+                    'b' => ' bbb ',
+                    'x' => [
+                        'a' => 'aaa',
+                        'b' => 'bbb',
+                    ],
+                    'ax' => [
+                        'a' => ' aaa ',
+                        'b' => ' bbb ',
+                    ],
+                ],
+            ],
+        ], $request->all());
+    }
+
+    /** @test */
     public function it_applies_valid_trim_filter_when_only_option_used_for_array_for_complex_structure()
     {
         $input = [
