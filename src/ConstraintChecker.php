@@ -12,10 +12,10 @@ class ConstraintChecker
      *
      * @return bool
      */
-    public function canBeMatchedToFieldsConstraints($fullKey, array $constraints)
+    public function matchMultiple($fullKey, array $constraints)
     {
         foreach ($constraints as $constraint) {
-            if ($this->fieldMatchesConstraint($fullKey, $constraint)) {
+            if ($this->match($fullKey, $constraint)) {
                 return true;
             }
         }
@@ -31,7 +31,7 @@ class ConstraintChecker
      *
      * @return bool
      */
-    public function fieldMatchesConstraint($fullKey, $constraint)
+    public function match($fullKey, $constraint)
     {
         if (ends_with($constraint, '.**')) {
             // 1st replace all dots into PCRE dot character

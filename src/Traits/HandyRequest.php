@@ -145,7 +145,7 @@ trait HandyRequest
     {
         if (property_exists($this, 'fieldFiltersMethods')) {
             foreach ($this->fieldFiltersMethods as $constraint => $methodName) {
-                if ($this->constraintChecker->fieldMatchesConstraint($fullKey, $constraint)) {
+                if ($this->constraintChecker->match($fullKey, $constraint)) {
                     return $methodName;
                 }
             }
@@ -213,14 +213,12 @@ trait HandyRequest
     protected function shouldApplyFilter($fullKey, $filterOptions)
     {
         if (array_key_exists('only', $filterOptions) &&
-            ! $this->constraintChecker->canBeMatchedToFieldsConstraints($fullKey,
-                $filterOptions['only'])
+            ! $this->constraintChecker->matchMultiple($fullKey, $filterOptions['only'])
         ) {
             return false;
         }
         if (array_key_exists('except', $filterOptions) &&
-            $this->constraintChecker->canBeMatchedToFieldsConstraints($fullKey,
-                $filterOptions['except'])
+            $this->constraintChecker->matchMultiple($fullKey, $filterOptions['except'])
         ) {
             return false;
         }
