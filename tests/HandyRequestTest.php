@@ -15,9 +15,7 @@ class HandyRequestTest extends UnitTestCase
     /** @test */
     public function it_can_initialize_from_other_request()
     {
-        $query = ['query_parameter_1' => 2, 'query_parameter_2' => 3];
         $input = ['a' => 2, 'b' => 'test'];
-        $attributes = ['attribute_1' => 'Attribute 1'];
         $cookies = ['sample_cookie' => 'Sample Cookie content'];
         $files = [
             'sample_file' => new UploadedFile(__FILE__, 'abc.jpg', 'text/html', 200,
@@ -25,21 +23,21 @@ class HandyRequestTest extends UnitTestCase
         ];
         $server = ['server_1' => 'Server 1 value', 'server_2' => 'Server 2 value'];
 
-        $request = new Request($query, $input, $attributes, $cookies, $files, $server, null);
+        HandyRequest::overrideDefaultRequest(new Application());
+
+        $handyRequest = Request::create('http://example.com', 'GET', $input, $cookies,
+            $files, $server, null);
+        $this->assertTrue($handyRequest instanceof HandyRequest);
 
         $session = Mockery::mock(SessionInterface::class);
         $session->shouldReceive('foo')->andReturn('bar');
-        $request->setSession($session);
+        $handyRequest->setSession($session);
 
-        $handyRequest = new HandyRequest();
-        $handyRequest->initializeFromRequest($request);
-        $handyRequest->setContainer(new Application());
-
-        $this->assertEquals($request->query(), $handyRequest->query());
-        $this->assertEquals($request->input(), $handyRequest->input());
-        $this->assertEquals($request->cookie(), $handyRequest->cookie());
-        $this->assertEquals($request->file(), $handyRequest->file());
-        $this->assertEquals($request->server(), $handyRequest->server());
+        $this->assertEquals($input, $handyRequest->query());
+        $this->assertEquals($input, $handyRequest->input());
+        $this->assertEquals($cookies, $handyRequest->cookie());
+        $this->assertEquals($files, $handyRequest->file());
+        $this->assertArraySubset($server, $handyRequest->server());
         $this->assertSame('bar', $handyRequest->session()->foo());
     }
 
