@@ -3,7 +3,6 @@
 namespace Tests\Traits;
 
 use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
 use Mnabialek\LaravelHandyRequest\HandyRequest;
 use Tests\Helpers\CapitalizeFilter;
 use Tests\Helpers\NewTrimFilter;
@@ -1151,10 +1150,8 @@ class HandyRequestTest extends UnitTestCase
 
     protected function initializeRequest(array $input, $class)
     {
-        $request = new Request($input);
-
-        $handyRequest = new $class();
-        $handyRequest->initializeFromRequest($request);
+        /** @var HandyRequest $handyRequest */
+        $handyRequest = new $class($input);
         $handyRequest->setContainer(new Application());
 
         return $handyRequest;
