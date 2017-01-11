@@ -16,32 +16,25 @@ class HandyRequest extends Request
     protected $container;
 
     /**
-     * Initialize class from other Request class
+     * Override default request
      *
-     * @param Request $request
-     *
-     * @return $this
+     * @param Container $container
      */
-    public function initializeFromRequest(Request $request)
+    public static function overrideDefaultRequest($container)
     {
-        $files = $request->files->all();
+        self::setFactory(function (
+            array $query = [],
+            array $request = [],
+            array $attributes = [],
+            array $cookies = [],
+            array $files = [],
+            array $server = [],
+            $content = null) use ($container) {
+            $newRequest = new static($query, $request, $attributes, $cookies, $files, $server,
+                $content);
 
-        $files = is_array($files) ? array_filter($files) : $files;
-
-        $this->initialize(
-            $request->query->all(), $request->request->all(), $request->attributes->all(),
-            $request->cookies->all(), $files, $request->server->all(), $request->getContent()
-        );
-
-        if ($session = $request->getSession()) {
-            $this->setSession($session);
-        }
-
-        $this->setUserResolver($request->getUserResolver());
-
-        $this->setRouteResolver($request->getRouteResolver());
-
-        return $this;
+            return $newRequest->setContainer($container);
+        });
     }
 
     /**
