@@ -81,7 +81,7 @@ In order to apply any filters you should define `$filters` property in your clas
 
 For example:
 
-```
+```php
 protected $filters = [
    'trim',
    'checkbox' => [
@@ -135,16 +135,18 @@ As you see here we defined custom method for `name` field and for `address.*` fi
 
 No matter if you use default field filter function name or you want to define custom one, you need to define it like this:
 
-```
-protected function filterName($value, $fullKey) {
+```php
+protected function filterName($value, $fullKey) 
+{
   return 'modified '.$value; 
 }
 ```
 
 for this function you get value of field and also full key of field (in dot notation). You can obviously use `$fullKey` to add any logic, for example if for `address` you want to make change for all address field except `street` you can define then `filterAllAddressFields` like so:
 
-```
-protected function filterAllAddressFields($value, $fullKey) {
+```php
+protected function filterAllAddressFields($value, $fullKey) 
+{
   if ($fullKey == 'address.street') {
      return $value;
   }
